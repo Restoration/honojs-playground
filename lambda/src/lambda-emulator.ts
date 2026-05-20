@@ -4,7 +4,12 @@ import type {
   Context,
 } from "aws-lambda";
 import { handler } from "./index";
-import { buildContext, buildEvent, readBody } from "./emulator-core";
+import {
+  buildContext,
+  buildEvent,
+  readBody,
+  type EventBody,
+} from "./emulator-core";
 
 const PORT = Number(process.env.PORT ?? 3000);
 const TIMEOUT_MS = Number(process.env.LAMBDA_TIMEOUT_MS ?? 3000);
@@ -14,10 +19,7 @@ const COLD_START_DELAY_MS = Number(process.env.LAMBDA_COLD_START_MS ?? 0);
 
 let coldStartPending = true;
 
-function buildEventFromReq(
-  req: IncomingMessage,
-  body: { body?: string; isBase64Encoded: boolean },
-) {
+function buildEventFromReq(req: IncomingMessage, body: EventBody) {
   return buildEvent({
     method: req.method ?? "GET",
     url: req.url ?? "/",
@@ -70,7 +72,6 @@ const server = createServer(async (req, res) => {
     ])) as APIGatewayProxyStructuredResultV2;
 
     clearTimeout(timeoutTimer);
-    coldStartPending = false;
     const duration = Date.now() - wallStart;
     console.log(`END RequestId: ${context.awsRequestId}`);
     console.log(
@@ -108,6 +109,9 @@ const server = createServer(async (req, res) => {
         stackTrace: (e.stack ?? "").split("\n"),
       }),
     );
+  } finally {
+    // Any handler invocation (success or failure) warms the container.
+    coldStartPending = false;
   }
 });
 

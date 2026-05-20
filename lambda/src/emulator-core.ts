@@ -15,6 +15,20 @@ export interface EventBody {
 const TEXT_CONTENT_TYPE_RE =
   /^(text\/|application\/(json|xml|x-www-form-urlencoded|javascript|graphql))/i;
 
+const MONTHS = [
+  "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+];
+
+// API Gateway v2 uses Apache CLF: "dd/MMM/yyyy:HH:mm:ss +0000"
+function formatApigwTime(d: Date): string {
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return (
+    `${pad(d.getUTCDate())}/${MONTHS[d.getUTCMonth()]}/${d.getUTCFullYear()}:` +
+    `${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}:${pad(d.getUTCSeconds())} +0000`
+  );
+}
+
 export function classifyBody(buf: Buffer, contentType: string): EventBody {
   if (buf.length === 0) return { isBase64Encoded: false };
   if (TEXT_CONTENT_TYPE_RE.test(contentType)) {
@@ -45,12 +59,13 @@ export function buildEvent(input: BuildEventInput): APIGatewayProxyEventV2 {
   const cookies: string[] = [];
   for (const [k, v] of Object.entries(input.headers)) {
     if (v === undefined) continue;
-    if (k.toLowerCase() === "cookie") {
+    const lk = k.toLowerCase();
+    if (lk === "cookie") {
       const raw = Array.isArray(v) ? v.join("; ") : v;
       cookies.push(...raw.split(/;\s*/));
       continue;
     }
-    headers[k] = Array.isArray(v) ? v.join(", ") : v;
+    headers[lk] = Array.isArray(v) ? v.join(", ") : v;
   }
 
   const queryStringParameters: Record<string, string> = {};
@@ -86,7 +101,7 @@ export function buildEvent(input: BuildEventInput): APIGatewayProxyEventV2 {
       requestId: randomUUID(),
       routeKey: "$default",
       stage: "$default",
-      time: now.toUTCString(),
+      time: formatApigwTime(now),
       timeEpoch: now.getTime(),
     },
     body: body.body,

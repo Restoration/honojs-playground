@@ -54,6 +54,27 @@ describe("buildEvent", () => {
     expect(event.headers["x-multi"]).toBe("a, b");
   });
 
+  it("lowercases mixed-case header keys (APIGW v2 spec)", () => {
+    const event = buildEvent({
+      method: "GET",
+      url: "/",
+      headers: { "User-Agent": "ua/1.0", "X-Custom": "v" },
+    });
+    expect(event.headers["user-agent"]).toBe("ua/1.0");
+    expect(event.headers["x-custom"]).toBe("v");
+    expect(event.headers["User-Agent"]).toBeUndefined();
+    // requestContext.http.userAgent should resolve regardless of input case
+    expect(event.requestContext.http.userAgent).toBe("ua/1.0");
+  });
+
+  it("formats requestContext.time in Apache CLF (APIGW v2)", () => {
+    const event = buildEvent({ method: "GET", url: "/", headers: {} });
+    // e.g., "21/May/2026:12:34:56 +0000"
+    expect(event.requestContext.time).toMatch(
+      /^\d{2}\/(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\/\d{4}:\d{2}:\d{2}:\d{2} \+0000$/,
+    );
+  });
+
   it("forwards body and isBase64Encoded", () => {
     const event = buildEvent({
       method: "POST",
