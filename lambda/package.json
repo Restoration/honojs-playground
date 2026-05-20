@@ -4,7 +4,9 @@
   "scripts": {
     "build": "esbuild src/index.ts --bundle --platform=node --target=node20 --format=cjs --outfile=dist/index.cjs",
     "package": "npm run build && cd dist && zip -r ../function.zip index.cjs",
-    "dev": "tsx watch src/local.ts"
+    "dev": "tsx watch src/local.ts",
+    "dev:emulator": "tsx watch src/lambda-emulator.ts",
+    "invoke": "tsx src/invoke.ts"
   },
   "dependencies": {
     "hono": "^4.7.10"

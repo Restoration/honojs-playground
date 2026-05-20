@@ -1,0 +1,33 @@
+{
+  "version": "2.0",
+  "routeKey": "$default",
+  "rawPath": "/entry/2",
+  "rawQueryString": "",
+  "headers": {
+    "accept": "application/json",
+    "host": "abc123.lambda-url.ap-northeast-1.on.aws",
+    "user-agent": "invoke-cli/1.0",
+    "x-forwarded-for": "127.0.0.1",
+    "x-forwarded-port": "443",
+    "x-forwarded-proto": "https"
+  },
+  "requestContext": {
+    "accountId": "anonymous",
+    "apiId": "abc123",
+    "domainName": "abc123.lambda-url.ap-northeast-1.on.aws",
+    "domainPrefix": "abc123",
+    "http": {
+      "method": "GET",
+      "path": "/entry/2",
+      "protocol": "HTTP/1.1",
+      "sourceIp": "127.0.0.1",
+      "userAgent": "invoke-cli/1.0"
+    },
+    "requestId": "test-furl-entry-2",
+    "routeKey": "$default",
+    "stage": "$default",
+    "time": "01/Jan/2026:00:00:00 +0000",
+    "timeEpoch": 1767225600000
+  },
+  "isBase64Encoded": false
+}

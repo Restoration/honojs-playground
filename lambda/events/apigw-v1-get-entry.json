@@ -1,0 +1,41 @@
+{
+  "resource": "/entry/{id}",
+  "path": "/entry/1",
+  "httpMethod": "GET",
+  "headers": {
+    "Accept": "application/json",
+    "Host": "localhost",
+    "User-Agent": "invoke-cli/1.0"
+  },
+  "multiValueHeaders": {
+    "Accept": ["application/json"]
+  },
+  "queryStringParameters": null,
+  "multiValueQueryStringParameters": null,
+  "pathParameters": {
+    "id": "1"
+  },
+  "stageVariables": null,
+  "requestContext": {
+    "accountId": "000000000000",
+    "apiId": "local",
+    "domainName": "localhost",
+    "domainPrefix": "localhost",
+    "extendedRequestId": "test-extended",
+    "httpMethod": "GET",
+    "identity": {
+      "sourceIp": "127.0.0.1",
+      "userAgent": "invoke-cli/1.0"
+    },
+    "path": "/prod/entry/1",
+    "protocol": "HTTP/1.1",
+    "requestId": "test-v1-entry",
+    "requestTime": "01/Jan/2026:00:00:00 +0000",
+    "requestTimeEpoch": 1767225600000,
+    "resourceId": "abc123",
+    "resourcePath": "/entry/{id}",
+    "stage": "prod"
+  },
+  "body": null,
+  "isBase64Encoded": false
+}
