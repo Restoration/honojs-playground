@@ -87,8 +87,7 @@ function buildEvent(
   };
 }
 
-function buildContext(): Context {
-  const startedAt = Date.now();
+function buildContext(deadline: number): Context {
   const requestId = randomUUID();
   return {
     callbackWaitsForEmptyEventLoop: true,
@@ -99,8 +98,7 @@ function buildContext(): Context {
     awsRequestId: requestId,
     logGroupName: `/aws/lambda/${FUNCTION_NAME}`,
     logStreamName: `${new Date().toISOString().slice(0, 10)}/[$LATEST]${requestId.replace(/-/g, "")}`,
-    getRemainingTimeInMillis: () =>
-      Math.max(0, TIMEOUT_MS - (Date.now() - startedAt)),
+    getRemainingTimeInMillis: () => Math.max(0, deadline - Date.now()),
     done: () => {},
     fail: () => {},
     succeed: () => {},
@@ -117,10 +115,12 @@ const server = createServer(async (req, res) => {
   }
 
   let context: Context | undefined;
+  let timeoutTimer: NodeJS.Timeout | undefined;
   try {
     const body = await readBody(req);
     const event = buildEvent(req, body);
-    context = buildContext();
+    const deadline = Date.now() + TIMEOUT_MS;
+    context = buildContext(deadline);
 
     console.log(
       `START RequestId: ${context.awsRequestId} Version: $LATEST${
@@ -129,7 +129,7 @@ const server = createServer(async (req, res) => {
     );
 
     const timeout = new Promise<never>((_, reject) => {
-      setTimeout(
+      timeoutTimer = setTimeout(
         () =>
           reject(
             new Error(
@@ -145,6 +145,7 @@ const server = createServer(async (req, res) => {
       timeout,
     ])) as APIGatewayProxyStructuredResultV2;
 
+    clearTimeout(timeoutTimer);
     const duration = Date.now() - wallStart;
     console.log(`END RequestId: ${context.awsRequestId}`);
     console.log(
@@ -167,6 +168,7 @@ const server = createServer(async (req, res) => {
       res.end();
     }
   } catch (err) {
+    clearTimeout(timeoutTimer);
     const e = err as Error;
     console.error(
       `${context ? context.awsRequestId : "-"}\tERROR\t${e.name}: ${e.message}`,

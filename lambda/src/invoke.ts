@@ -18,6 +18,7 @@ const MEMORY_MB = Number(process.env.LAMBDA_MEMORY_MB ?? 128);
 const FUNCTION_NAME = process.env.LAMBDA_FUNCTION_NAME ?? "hono-playground";
 
 const startedAt = Date.now();
+const deadline = startedAt + TIMEOUT_MS;
 const requestId = randomUUID();
 
 const context: Context = {
@@ -29,8 +30,7 @@ const context: Context = {
   awsRequestId: requestId,
   logGroupName: `/aws/lambda/${FUNCTION_NAME}`,
   logStreamName: `${new Date().toISOString().slice(0, 10)}/[$LATEST]${requestId.replace(/-/g, "")}`,
-  getRemainingTimeInMillis: () =>
-    Math.max(0, TIMEOUT_MS - (Date.now() - startedAt)),
+  getRemainingTimeInMillis: () => Math.max(0, deadline - Date.now()),
   done: () => {},
   fail: () => {},
   succeed: () => {},
@@ -38,8 +38,9 @@ const context: Context = {
 
 console.log(`START RequestId: ${requestId}`);
 
+let timeoutTimer: NodeJS.Timeout | undefined;
 const timeout = new Promise<never>((_, reject) => {
-  setTimeout(
+  timeoutTimer = setTimeout(
     () =>
       reject(
         new Error(
@@ -55,6 +56,7 @@ try {
     handler(event, context, () => {}),
     timeout,
   ]);
+  clearTimeout(timeoutTimer);
   const duration = Date.now() - startedAt;
   console.log(`END RequestId: ${requestId}`);
   console.log(
@@ -63,6 +65,7 @@ try {
   console.log("--- response ---");
   console.log(JSON.stringify(result, null, 2));
 } catch (err) {
+  clearTimeout(timeoutTimer);
   const e = err as Error;
   console.error(`ERROR\t${e.name}: ${e.message}`);
   if (e.stack) console.error(e.stack);
