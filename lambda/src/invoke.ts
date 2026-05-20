@@ -11,7 +11,18 @@ if (!eventArg) {
 }
 
 const eventPath = resolve(process.cwd(), eventArg);
-const event = JSON.parse(readFileSync(eventPath, "utf8"));
+let event: unknown;
+try {
+  event = JSON.parse(readFileSync(eventPath, "utf8"));
+} catch (err) {
+  const e = err as NodeJS.ErrnoException;
+  if (e.code === "ENOENT") {
+    console.error(`Event file not found: ${eventPath}`);
+  } else {
+    console.error(`Failed to read/parse ${eventPath}: ${e.message}`);
+  }
+  process.exit(1);
+}
 
 const TIMEOUT_MS = Number(process.env.LAMBDA_TIMEOUT_MS ?? 3000);
 const MEMORY_MB = Number(process.env.LAMBDA_MEMORY_MB ?? 128);

@@ -14,7 +14,7 @@ const blogPosts = [
 
 const app = new Hono().basePath("/api");
 
-app.use("*", prettyJSON());
+app.use("/entry/*", prettyJSON());
 
 app.get("/", (c) => c.text("Hello Hono!"));
 

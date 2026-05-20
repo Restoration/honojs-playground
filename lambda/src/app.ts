@@ -9,7 +9,7 @@ const blogPosts = [
 
 export const app = new Hono();
 
-app.use("*", prettyJSON());
+app.use("/entry/*", prettyJSON());
 
 app.get("/", (c) => c.text("Hello Hono on Lambda!"));
 

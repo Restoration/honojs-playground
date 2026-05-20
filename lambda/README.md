@@ -112,11 +112,12 @@ END RequestId: 7b2a...
 REPORT RequestId: 7b2a...	Duration: 14 ms	Memory Size: 128 MB
 ```
 
-#### 限界
+#### 限界（既知）
 
-- Node.jsプロセスは同一なので、**コンテナレベルの隔離**（メモリ制限・FS隔離・ネットワーク分離）は再現しません。
-- IAM/VPC/環境変数の管理は対象外（必要なら `.env` で代用）。
-- 完全に本物に寄せたい場合は SAM CLI / Lambda RIE（後述）。
+- **コンテナ隔離なし** — Node.jsプロセスは同一なので、メモリ制限・FS隔離・ネットワーク分離は再現しません。
+- **タイムアウト後もhandlerは裏で走り続ける** — 本物のLambdaはタイムアウトでプロセスごと殺されますが、エミュレータは `Promise.race` で外側だけ切ります。そのため、長時間動くhandlerが共有状態（モジュールスコープのキャッシュなど）を後から書き換える可能性があります。`worker_threads` を介さない限り原理的に解消不能なので、テスト時はhandler内のロジックを冪等に保つこと。
+- **IAM / VPC は対象外** — 必要なら `.env` で環境変数だけ代用。
+- **完全に本物に寄せたい場合は SAM CLI / Lambda RIE**（後述）。
 
 ### モード3: 単発イベント実行（`npm run invoke`）
 
@@ -185,6 +186,8 @@ Resources:
 npm run build              # dist/index.cjs を生成
 sam local start-api        # Docker内のLambda Runtime で http://localhost:3000 を待受
 ```
+
+> **Note**: `CodeUri: ./dist` を指定しているため、SAMはビルド成果物（`dist/index.cjs`）を直接マウントします。`function.zip` は `aws lambda update-function-code` でデプロイする時用で、`sam local` では使いません。
 
 #### 単発実行（SAM）
 

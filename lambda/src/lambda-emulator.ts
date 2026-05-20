@@ -14,6 +14,7 @@ const FUNCTION_NAME = process.env.LAMBDA_FUNCTION_NAME ?? "hono-playground";
 const COLD_START_DELAY_MS = Number(process.env.LAMBDA_COLD_START_MS ?? 0);
 
 let invocationCount = 0;
+let coldStartPending = true;
 
 async function readBody(
   req: IncomingMessage,
@@ -42,7 +43,7 @@ function buildEvent(
     if (v === undefined) continue;
     if (k.toLowerCase() === "cookie") {
       const raw = Array.isArray(v) ? v.join("; ") : v;
-      cookies.push(...raw.split("; "));
+      cookies.push(...raw.split(/;\s*/));
       continue;
     }
     headers[k] = Array.isArray(v) ? v.join(", ") : v;
@@ -58,7 +59,7 @@ function buildEvent(
     version: "2.0",
     routeKey: "$default",
     rawPath: url.pathname,
-    rawQueryString: url.search.replace(/^\?/, ""),
+    rawQueryString: url.searchParams.toString(),
     cookies: cookies.length ? cookies : undefined,
     headers,
     queryStringParameters: Object.keys(queryStringParameters).length
@@ -108,7 +109,7 @@ function buildContext(deadline: number): Context {
 const server = createServer(async (req, res) => {
   const wallStart = Date.now();
   invocationCount += 1;
-  const isColdStart = invocationCount === 1;
+  const isColdStart = coldStartPending;
 
   if (isColdStart && COLD_START_DELAY_MS > 0) {
     await new Promise((r) => setTimeout(r, COLD_START_DELAY_MS));
@@ -146,6 +147,7 @@ const server = createServer(async (req, res) => {
     ])) as APIGatewayProxyStructuredResultV2;
 
     clearTimeout(timeoutTimer);
+    coldStartPending = false;
     const duration = Date.now() - wallStart;
     console.log(`END RequestId: ${context.awsRequestId}`);
     console.log(
