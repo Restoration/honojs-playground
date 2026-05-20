@@ -9,5 +9,5 @@
     "types": ["node", "aws-lambda"],
     "outDir": "dist"
   },
-  "include": ["src/**/*"]
+  "include": ["src/**/*", "tests/**/*"]
 }

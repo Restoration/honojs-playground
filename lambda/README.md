@@ -276,6 +276,21 @@ aws lambda update-function-code \
 | Handler | `index.handler` |
 | Architecture | x86_64 / arm64 |
 
+## テスト
+
+vitest で3層のテストを実行：
+
+| ファイル | レイヤ | 内容 |
+| --- | --- | --- |
+| `tests/app.test.ts` | Hono直接 | `app.request()` で各ルートの挙動 |
+| `tests/handler.test.ts` | Lambda層経由 | `events/*.json` を `handler` に流して `statusCode` / `body` 検証 |
+| `tests/emulator-core.test.ts` | 純関数 | `buildEvent` / `buildContext` / `classifyBody` のユニットテスト |
+
+```bash
+npm test           # 1回実行
+npm run test:watch # ファイル監視
+```
+
 ## スクリプト一覧
 
 | script | 用途 |
@@ -285,6 +300,7 @@ aws lambda update-function-code \
 | `npm run invoke -- <event.json>` | 単発イベント実行 |
 | `npm run build` | esbuild バンドル → `dist/index.cjs` |
 | `npm run package` | build → zip 化 |
+| `npm test` / `npm run test:watch` | vitest |
 
 ## ルート一覧
 

@@ -1,8 +1,7 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { randomUUID } from "node:crypto";
-import type { Context } from "aws-lambda";
 import { handler } from "./index";
+import { buildContext } from "./emulator-core";
 
 const eventArg = process.argv[2];
 if (!eventArg) {
@@ -30,24 +29,12 @@ const FUNCTION_NAME = process.env.LAMBDA_FUNCTION_NAME ?? "hono-playground";
 
 const startedAt = Date.now();
 const deadline = startedAt + TIMEOUT_MS;
-const requestId = randomUUID();
+const context = buildContext({
+  deadline,
+  env: { functionName: FUNCTION_NAME, memoryMB: MEMORY_MB },
+});
 
-const context: Context = {
-  callbackWaitsForEmptyEventLoop: true,
-  functionName: FUNCTION_NAME,
-  functionVersion: "$LATEST",
-  invokedFunctionArn: `arn:aws:lambda:local:000000000000:function:${FUNCTION_NAME}`,
-  memoryLimitInMB: String(MEMORY_MB),
-  awsRequestId: requestId,
-  logGroupName: `/aws/lambda/${FUNCTION_NAME}`,
-  logStreamName: `${new Date().toISOString().slice(0, 10)}/[$LATEST]${requestId.replace(/-/g, "")}`,
-  getRemainingTimeInMillis: () => Math.max(0, deadline - Date.now()),
-  done: () => {},
-  fail: () => {},
-  succeed: () => {},
-};
-
-console.log(`START RequestId: ${requestId}`);
+console.log(`START RequestId: ${context.awsRequestId}`);
 
 let timeoutTimer: NodeJS.Timeout | undefined;
 const timeout = new Promise<never>((_, reject) => {
@@ -64,14 +51,15 @@ const timeout = new Promise<never>((_, reject) => {
 
 try {
   const result = await Promise.race([
-    handler(event, context, () => {}),
+    // event is read from disk; hono/aws-lambda handles v1/v2/Function URL union
+    handler(event as never, context, () => {}),
     timeout,
   ]);
   clearTimeout(timeoutTimer);
   const duration = Date.now() - startedAt;
-  console.log(`END RequestId: ${requestId}`);
+  console.log(`END RequestId: ${context.awsRequestId}`);
   console.log(
-    `REPORT RequestId: ${requestId}\tDuration: ${duration} ms\tMemory: ${MEMORY_MB} MB`,
+    `REPORT RequestId: ${context.awsRequestId}\tDuration: ${duration} ms\tMemory: ${MEMORY_MB} MB`,
   );
   console.log("--- response ---");
   console.log(JSON.stringify(result, null, 2));

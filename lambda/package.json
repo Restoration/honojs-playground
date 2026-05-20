@@ -10,7 +10,9 @@
     "package": "npm run build && cd dist && zip -r ../function.zip index.cjs",
     "dev": "tsx watch src/local.ts",
     "dev:emulator": "tsx watch src/lambda-emulator.ts",
-    "invoke": "tsx src/invoke.ts"
+    "invoke": "tsx src/invoke.ts",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "hono": "^4.7.10"
@@ -21,6 +23,7 @@
     "@types/node": "^20.14.0",
     "esbuild": "^0.24.0",
     "tsx": "^4.19.0",
-    "typescript": "^5.6.0"
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.0"
   }
 }
