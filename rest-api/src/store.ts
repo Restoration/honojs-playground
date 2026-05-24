@@ -60,34 +60,26 @@ export function replacePost(
   id: string,
   input: { title: string; content: string },
 ): Post | null {
-  const existing = getPost(id);
-  if (!existing) return null;
-  const now = Date.now();
-  getDb()
+  const info = getDb()
     .prepare(
       "UPDATE posts SET title = ?, content = ?, updated_at = ? WHERE id = ?",
     )
-    .run(input.title, input.content, now, id);
-  return { ...existing, ...input, updatedAt: now };
+    .run(input.title, input.content, Date.now(), id);
+  if (info.changes === 0) return null;
+  return getPost(id);
 }
 
 export function patchPost(
   id: string,
   input: { title?: string; content?: string },
 ): Post | null {
-  const existing = getPost(id);
-  if (!existing) return null;
-  const now = Date.now();
-  const next = {
-    title: input.title ?? existing.title,
-    content: input.content ?? existing.content,
-  };
-  getDb()
+  const info = getDb()
     .prepare(
-      "UPDATE posts SET title = ?, content = ?, updated_at = ? WHERE id = ?",
+      "UPDATE posts SET title = COALESCE(?, title), content = COALESCE(?, content), updated_at = ? WHERE id = ?",
     )
-    .run(next.title, next.content, now, id);
-  return { ...existing, ...next, updatedAt: now };
+    .run(input.title ?? null, input.content ?? null, Date.now(), id);
+  if (info.changes === 0) return null;
+  return getPost(id);
 }
 
 export function deletePost(id: string): boolean {

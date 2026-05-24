@@ -1,5 +1,6 @@
 import { createRequire } from "node:module";
 
+// vitest (Vite) の resolver が node:sqlite を解決できないため createRequire 経由で読む
 const require = createRequire(import.meta.url);
 const { DatabaseSync } = require("node:sqlite") as typeof import("node:sqlite");
 
